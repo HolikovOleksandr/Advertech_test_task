@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 class SendDataController {
@@ -28,14 +27,11 @@ class SendDataController {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Successful! ===${response.statusCode}===');
         return true;
       } else {
-        print('Not successful ===${response.statusCode}===');
         return false;
       }
     } catch (e) {
-      print('Error sending data: $e');
       return false;
     }
   }

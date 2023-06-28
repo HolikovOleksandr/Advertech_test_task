@@ -1,10 +1,9 @@
-// ignore_for_file: unused_element, deprecated_member_use, unused_local_variable, no_leading_underscores_for_local_identifiers, avoid_print, unused_field
+// ignore_for_file: unused_element, avoid_print, use_build_context_synchronously
+
 import 'package:advertech_test_task/controllers/send_data_controller.dart';
-import 'package:advertech_test_task/helpers/assets.dart';
 import 'package:advertech_test_task/helpers/colors.dart';
 import 'package:advertech_test_task/helpers/fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
@@ -31,59 +30,63 @@ class _ContactScreenState extends State<ContactScreen> {
     super.dispose();
   }
 
-  isValidEmail(String email) {
-    final bool emailValid = RegExp(
-            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-        .hasMatch(email);
+  bool isValidEmail(String email) {
+    final emailValid = RegExp(
+      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+    ).hasMatch(email);
+
     return emailValid;
   }
 
   void _validateInputs() {
-    _formKey.currentState!.validate()
-        ? setState(() => _isButtonDisabled = false)
-        : setState(() => _isButtonDisabled = true);
+    setState(() => _isButtonDisabled = !_formKey.currentState!.validate());
   }
 
-  void _submitForm() {
+  Future<void> _sendDataToServer() async {
     if (_formKey.currentState!.validate()) {
-      int answer = _sendDataController.fetchData(
+      bool result = await _sendDataController.fetchData(
         name: _nameController.text,
         email: _emailController.text,
         message: _messageController.text,
       );
 
-      _nameController.clear();
-      _emailController.clear();
-      _messageController.clear();
+      _showResultMessage(result, context);
 
       setState(() {
-        _isButtonDisabled = true;
         _isLoading = false;
+        _isButtonDisabled = false;
+
+        _nameController.clear();
+        _emailController.clear();
+        _messageController.clear();
       });
     }
   }
 
   @override
-  build(BuildContext context) {
+  Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.white,
       appBar: _appBar(),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Form(
           key: _formKey,
           onChanged: _validateInputs,
           child: Column(
             children: [
+              const Spacer(),
               _requiredInputField(
-                lable: 'Name',
+                size: size,
+                label: 'Name',
                 controller: _nameController,
                 validator: (v) => v!.isEmpty ? 'Name is required' : null,
               ),
               _requiredInputField(
-                lable: 'Email',
+                size: size,
+                label: 'Email',
                 controller: _emailController,
                 validator: (v) {
                   if (v!.isEmpty) return 'Email is required';
@@ -92,12 +95,14 @@ class _ContactScreenState extends State<ContactScreen> {
                 },
               ),
               _requiredInputField(
-                lable: 'Message',
+                size: size,
+                label: 'Message',
                 controller: _messageController,
                 validator: (v) => v!.isEmpty ? 'Message is required' : null,
               ),
-              const SizedBox(height: 16.0),
-              _sendButton(size)
+              const Spacer(flex: 3),
+              _sendDataButton(size),
+              const Spacer(flex: 8),
             ],
           ),
         ),
@@ -105,24 +110,53 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 
-  _requiredInputField({
+  Widget _requiredInputField({
     required String? Function(String?)? validator,
     required TextEditingController controller,
-    required String? lable,
+    required String? label,
+    required Size size,
   }) {
-    return TextFormField(
-      validator: validator!,
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: lable!,
-        labelStyle: AppFonts.lableText.copyWith(
-          color: AppColors.lightGrey,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              _lockInCircleIcon(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextFormField(
+                  validator: validator!,
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: label!,
+                    labelStyle: AppFonts.lableText.copyWith(
+                      color: AppColors.grey,
+                    ),
+                    enabledBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: AppColors.lightGrey,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: const UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: AppColors.purple,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  _lockInCircleIcon() {
+  Widget _lockInCircleIcon() {
     return Container(
       height: 45,
       width: 45,
@@ -130,56 +164,79 @@ class _ContactScreenState extends State<ContactScreen> {
         color: AppColors.creame,
         borderRadius: BorderRadius.circular(50),
       ),
-      child: Center(
-        child: SvgPicture.asset(
-          AppAssets.openLockSVG,
+      child: const Center(
+        child: Icon(
+          Icons.lock_open,
           color: AppColors.yellow,
-          height: 18,
-          width: 18,
+          size: 18,
         ),
       ),
     );
   }
 
-  _sendButton(Size size) {
+  Widget _sendDataButton(Size size) {
     return GestureDetector(
-      onTap: _isButtonDisabled ? null : _submitForm,
+      onTap: () {
+        _sendDataToServer();
+      },
       child: Container(
         width: size.width,
         height: 50,
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(50),
           color: _isButtonDisabled
               ? AppColors.purple.withOpacity(.5)
               : AppColors.purple,
-          borderRadius: BorderRadius.circular(50),
         ),
         child: Center(
-          child: Text(
-            _isButtonDisabled ? 'Enter all required fiels' : 'Send',
-            style: AppFonts.buttonText.copyWith(
-              color: AppColors.white,
-            ),
+          child: !_isLoading
+              ? Text(
+                  _isButtonDisabled ? 'Enter all required fields' : 'Send',
+                  style: AppFonts.buttonText.copyWith(
+                      color: _isButtonDisabled
+                          ? AppColors.purple
+                          : AppColors.white),
+                )
+              : const SizedBox(
+                  height: 30,
+                  width: 30,
+                  child: CircularProgressIndicator(
+                    color: AppColors.purple,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  _showResultMessage(bool result, BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: result ? AppColors.purple : AppColors.red,
+        content: Text(
+          result ? 'Successful!' : 'Error',
+          style: AppFonts.buttonText.copyWith(
+            color: result ? AppColors.creame : AppColors.black,
           ),
         ),
       ),
     );
   }
 
-  _appBar() {
+  AppBar _appBar() {
     return AppBar(
       title: Text(
         'Contact us',
-        style: AppFonts.titleText.copyWith(
-          color: AppColors.black,
-        ),
+        style: AppFonts.titleText.copyWith(color: AppColors.black),
       ),
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back,
-          color: AppColors.black,
-        ),
-        onPressed: () {},
+        icon: const Icon(Icons.arrow_back, color: AppColors.black),
+        onPressed: () => setState(() {
+          _nameController.text = "Oleksandr";
+          _emailController.text = "sanyagolikov97@gmail.com";
+          _messageController.text = "Please hire me (:";
+        }),
       ),
       elevation: 0,
       backgroundColor: Colors.transparent,

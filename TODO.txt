@@ -1,9 +1,9 @@
-Contact page with form
-Form should contain 3 fields: name, email, message
-Form should contain Send button
-Form should contain validation for all fields (all fields are required)
-Form should contain validation for email field (email field should contain valid email address)
-Send button should be disabled until all fields are filled and valid
-Send button should be switched to "please wait" mode on click and enabled again after response from the server
-Form should show error message if server response is not 200
-Form should show success message if server response is 200
++ Contact page with form
++ Form should contain 3 fields: name, email, message
++ Form should contain Send button
++ Form should contain validation for all fields (all fields are required)
++ Form should contain validation for email field (email field should contain valid email address)
++ Send button should be disabled until all fields are filled and valid
++ Send button should be switched to "please wait" mode on click and enabled again after response from the server
++ Form should show error message if server response is not 200
++ Form should show success message if server response is 200
